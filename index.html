@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Icon Generator — Kreads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0A0A0B;
+    --surface: #111113;
+    --surface2: #1A1A1E;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #F0F0F0;
+    --text2: #888;
+    --text3: #555;
+    --accent: #E8FF57;
+    --accent2: #B8CC3A;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    grid-template-rows: 52px 1fr;
+  }
+
+  /* HEADER */
+  header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .logo { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .header-tag { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  /* SIDEBAR */
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-section { padding: 16px; border-bottom: 1px solid var(--border); }
+  .sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--text3); text-transform: uppercase; margin-bottom: 10px; }
+
+  /* BRAND SEARCH */
+  .search-wrap { position: relative; }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 14px; pointer-events: none; }
+  #brandSearch {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 10px 8px 32px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #brandSearch:focus { border-color: var(--accent); }
+  #brandSearch::placeholder { color: var(--text3); }
+
+  /* BRAND LIST */
+  .brand-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .brand-list::-webkit-scrollbar { width: 4px; }
+  .brand-list::-webkit-scrollbar-track { background: transparent; }
+  .brand-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .brand-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.1s;
+    border: 1px solid transparent;
+    margin-bottom: 2px;
+  }
+  .brand-item:hover { background: var(--surface2); }
+  .brand-item.active { background: var(--surface2); border-color: var(--border2); }
+  .brand-item.active .brand-name { color: var(--text); }
+  .brand-dot { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+  .brand-info { flex: 1; min-width: 0; }
+  .brand-name { font-size: 13px; font-weight: 500; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand-style-tag { font-size: 10px; color: var(--text3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand-check { font-size: 14px; color: var(--accent); opacity: 0; transition: opacity 0.1s; }
+  .brand-item.active .brand-check { opacity: 1; }
+
+  /* ADD BRAND BTN */
+  .add-brand-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text3);
+    border: 1px dashed var(--border2);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    width: calc(100% - 16px);
+    margin: 8px;
+    transition: all 0.15s;
+  }
+  .add-brand-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* MAIN */
+  main {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    overflow: hidden;
+  }
+
+  .canvas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* BRAND CONTEXT PILL */
+  .context-bar {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .context-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+  }
+  .context-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* RESULT */
+  .result-zone {
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 1;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    transition: border-color 0.3s;
+  }
+  .result-zone.has-image { border-color: var(--border2); }
+  .result-zone img { width: 100%; height: 100%; object-fit: contain; }
+
+  .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--text3);
+  }
+  .placeholder-icon { font-size: 40px; opacity: 0.3; }
+  .placeholder-txt { font-size: 13px; text-align: center; line-height: 1.5; }
+
+  .spinner-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .spinner { width: 32px; height: 32px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner-label { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  /* RATIO SWITCHER */
+  .ratio-bar { display: flex; gap: 4px; margin-top: 16px; }
+  .ratio-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .ratio-btn:hover { border-color: var(--border2); color: var(--text2); }
+  .ratio-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(232,255,87,0.06); }
+
+  /* BOTTOM BAR */
+  .bottom-bar {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  .prompt-wrap { flex: 1; }
+  .prompt-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin-bottom: 6px; }
+  .prompt-input-row { display: flex; gap: 8px; align-items: center; }
+  #promptInput {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #promptInput:focus { border-color: var(--accent); }
+  #promptInput::placeholder { color: var(--text3); }
+
+  .gen-btn {
+    padding: 10px 24px;
+    background: var(--accent);
+    color: #0A0A0B;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, transform 0.1s;
+    flex-shrink: 0;
+  }
+  .gen-btn:hover { background: var(--accent2); }
+  .gen-btn:active { transform: scale(0.98); }
+  .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .dl-btn {
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: none;
+    white-space: nowrap;
+  }
+  .dl-btn:hover { border-color: var(--text2); color: var(--text); }
+
+  /* HISTORY */
+  .history-bar { display: flex; gap: 8px; padding: 12px 24px; border-top: 1px solid var(--border); overflow-x: auto; }
+  .history-bar::-webkit-scrollbar { height: 0; }
+  .history-thumb {
+    width: 48px; height: 48px; border-radius: 8px; overflow: hidden; flex-shrink: 0;
+    border: 1px solid var(--border); cursor: pointer; transition: border-color 0.15s;
+  }
+  .history-thumb:hover { border-color: var(--accent); }
+  .history-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* MODAL ADD BRAND */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-close { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 20px; line-height: 1; padding: 4px; }
+  .modal-close:hover { color: var(--text); }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin-bottom: 6px; display: block; }
+  .form-input, .form-textarea, .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-select { appearance: none; cursor: pointer; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  .pdf-drop {
+    border: 1px dashed var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text3);
+    font-size: 13px;
+  }
+  .pdf-drop:hover { border-color: var(--accent); color: var(--text2); }
+  .pdf-drop.has-file { border-color: var(--accent); color: var(--accent); background: rgba(232,255,87,0.04); }
+
+  .color-preview { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border2); flex-shrink: 0; }
+  .color-row { display: flex; align-items: center; gap: 8px; }
+
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+  .btn-secondary {
+    padding: 9px 20px; background: transparent; border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text2); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; cursor: pointer;
+  }
+  .btn-secondary:hover { border-color: var(--text2); color: var(--text); }
+  .btn-primary {
+    padding: 9px 20px; background: var(--accent); border: none;
+    border-radius: var(--radius-sm); color: #0A0A0B; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+
+  /* COMMENT PANEL */
+  .comment-toggle {
+    position: absolute; bottom: 20px; right: 20px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 50%; width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; color: var(--text3);
+    transition: all 0.15s;
+  }
+  .comment-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .comment-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: var(--accent); color: #0A0A0B;
+    font-size: 9px; font-weight: 700; border-radius: 10px;
+    padding: 1px 5px; display: none;
+  }
+
+  .comment-panel {
+    position: fixed; right: 0; top: 52px; bottom: 0;
+    width: 320px; background: var(--surface);
+    border-left: 1px solid var(--border2);
+    display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform 0.2s;
+    z-index: 50;
+  }
+  .comment-panel.open { transform: translateX(0); }
+  .comment-panel-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .comment-panel-title { font-size: 13px; font-weight: 600; }
+  .comment-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .comment-item { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .comment-meta { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 4px; }
+  .comment-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .comment-input-wrap { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  .comment-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; padding: 8px 10px; outline: none; resize: none;
+  }
+  .comment-input:focus { border-color: var(--accent); }
+  .comment-send {
+    padding: 8px 12px; background: var(--accent); color: #0A0A0B;
+    border: none; border-radius: var(--radius-sm); font-size: 12px;
+    font-weight: 600; cursor: pointer; align-self: flex-end;
+  }
+
+  .error-toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #3A1A1A; border: 1px solid #8B2020; color: #FF8080;
+    padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px;
+    display: none; z-index: 200;
+  }
+  .error-toast.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">KREADS — ICON GEN</span>
+  <div class="header-right">
+    <span class="header-tag">nano-banana-pro</span>
+  </div>
+</header>
+
+<aside>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Marque</div>
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="brandSearch" placeholder="Rechercher une marque..." autocomplete="off" />
+    </div>
+  </div>
+  <div class="brand-list" id="brandList"></div>
+  <button class="add-brand-btn" onclick="openAddModal()">＋ Ajouter une marque</button>
+</aside>
+
+<main>
+  <div class="canvas">
+    <div class="context-bar" id="contextBar"></div>
+
+    <div class="result-zone" id="resultZone">
+      <div class="placeholder">
+        <div class="placeholder-icon">◈</div>
+        <div class="placeholder-txt">Sélectionne une marque<br/>puis tape ton prompt</div>
+      </div>
+    </div>
+
+    <div class="ratio-bar">
+      <button class="ratio-btn active" data-ratio="1:1">1:1</button>
+      <button class="ratio-btn" data-ratio="4:5">4:5</button>
+      <button class="ratio-btn" data-ratio="9:16">9:16</button>
+      <button class="ratio-btn" data-ratio="16:9">16:9</button>
+      <button class="ratio-btn" data-ratio="3:2">3:2</button>
+    </div>
+
+    <div class="comment-toggle" onclick="toggleComments()" id="commentToggle">
+      💬<span class="comment-badge" id="commentBadge">0</span>
+    </div>
+  </div>
+
+  <div class="history-bar" id="historyBar" style="display:none"></div>
+
+  <div class="bottom-bar">
+    <div class="prompt-wrap">
+      <div class="prompt-label">Prompt</div>
+      <div class="prompt-input-row">
+        <input type="text" id="promptInput" placeholder="ex: icône carte bancaire, icône notification…" autocomplete="off" />
+      </div>
+    </div>
+    <button class="dl-btn" id="dlBtn">↓ PNG</button>
+    <button class="gen-btn" id="genBtn" onclick="generate()">Générer →</button>
+  </div>
+</main>
+
+<!-- COMMENT PANEL -->
+<div class="comment-panel" id="commentPanel">
+  <div class="comment-panel-header">
+    <span class="comment-panel-title">Commentaires & bugs</span>
+    <button class="modal-close" onclick="toggleComments()">×</button>
+  </div>
+  <div class="comment-list" id="commentList">
+    <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">Aucun commentaire</div>
+  </div>
+  <div class="comment-input-wrap">
+    <textarea class="comment-input" id="commentInput" rows="2" placeholder="Bug, remarque, idée..."></textarea>
+    <button class="comment-send" onclick="addComment()">→</button>
+  </div>
+</div>
+
+<!-- ADD BRAND MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nouvelle marque</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Nom de la marque *</label>
+      <input type="text" class="form-input" id="newName" placeholder="ex: Maison Rivière" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Couleur principale</label>
+        <div class="color-row">
+          <input type="color" id="newColor" value="#6366F1" style="width:40px;height:36px;border:1px solid var(--border2);border-radius:6px;background:none;cursor:pointer;padding:2px;" />
+          <input type="text" class="form-input" id="newColorHex" placeholder="#6366F1" style="flex:1" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Style graphique</label>
+        <select class="form-select" id="newStyleBase">
+          <option value="flat vector">Flat vector</option>
+          <option value="illustrated">Illustré / Dessiné</option>
+          <option value="3D render">3D render</option>
+          <option value="minimal line">Minimal ligne</option>
+          <option value="bold geometric">Géométrique bold</option>
+          <option value="organic hand-drawn">Organique / Hand-drawn</option>
+          <option value="luxury refined">Luxe / Raffiné</option>
+          <option value="brutalist">Brutaliste</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Palette de couleurs (HEX)</label>
+      <input type="text" class="form-input" id="newPalette" placeholder="ex: #00C896, #FFFFFF, #1A1A2E" />
+      <div class="form-hint">Sépare les couleurs par des virgules</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Univers & mood</label>
+      <input type="text" class="form-input" id="newMood" placeholder="ex: accessible, moderne, fintech, inclusif" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Mots-clés DA (style, textures, formes)</label>
+      <textarea class="form-textarea" id="newDA" placeholder="ex: formes géométriques simples, pas de dégradés, contours épais, icônes friendly et rondes…"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Marques / références visuelles</label>
+      <input type="text" class="form-input" id="newRefs" placeholder="ex: Duolingo, Monzo, Oatly" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Charger une DA PDF / image</label>
+      <div class="pdf-drop" id="pdfDrop" onclick="document.getElementById('pdfFile').click()">
+        <div>📎 Glisse un PDF ou une image de charte ici</div>
+        <div style="font-size:11px;margin-top:4px">La DA sera extraite automatiquement par IA</div>
+      </div>
+      <input type="file" id="pdfFile" accept=".pdf,image/*" style="display:none" onchange="handleFile(event)" />
+    </div>
+
+    <div id="aiExtractStatus" style="display:none;font-size:12px;color:var(--accent);margin-top:-8px;margin-bottom:12px">
+      ⏳ Extraction de la DA en cours...
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn-primary" onclick="saveBrand()">Ajouter la marque</button>
+    </div>
+  </div>
+</div>
+
+<div class="error-toast" id="errorToast"></div>
+
+<script>
+const BRANDS_KEY = 'icon_gen_brands_v2';
+const COMMENTS_KEY = 'icon_gen_comments';
+
+const DEFAULT_BRANDS = [
+  { id:'nickel', name:'Nickel', color:'#00C896', styleBase:'flat vector', palette:'#00C896, #FFFFFF, #1A1A2E', mood:'accessible, moderne, fintech inclusif', da:'formes géométriques simples, pas de dégradés, contours épais, icônes friendly et rondes, couleurs vives, style épuré', refs:'Monzo, Revolut' },
+  { id:'franklin', name:'Franklin Pet Food', color:'#E8A020', styleBase:'illustrated', palette:'#E8A020, #FFF8EC, #2D5016', mood:'naturel, premium, bienveillant, chaleureux', da:'illustration chaleureuse, tons ambrés et crème, look artisanal, formes organiques, feel pet food premium', refs:'Lily\'s Kitchen, Edgard Cooper' },
+  { id:'maserre', name:'Ma Serre Verte', color:'#4CAF50', styleBase:'flat vector', palette:'#4CAF50, #8FBC8F, #FAFAF5', mood:'eco-friendly, frais, croissance, naturel', da:'icônes botaniques flat, verts frais, lignes propres, inspiration nature et jardinage', refs:'Truffaut, Oh My Green' },
+  { id:'nuage', name:'Nuage', color:'#7B9FE0', styleBase:'minimal line', palette:'#7B9FE0, #E8EEF8, #FFFFFF', mood:'doux, léger, aérien, réconfortant', da:'formes arrondies douces, bleu ciel et lavande pâle, minimalisme poétique, aucun angle vif', refs:'Calm, Headspace' },
+  { id:'moona', name:'Moona Underwear', color:'#D4A0B0', styleBase:'luxury refined', palette:'#D4A0B0, #F5E6DC, #4A1530', mood:'intime, élégant, body-positive, féminité moderne', da:'lignes épurées et fines, rose et nude, sophistication discrète, pas de fioritures, typographie délicate', refs:'Sloggi, Eres' },
+  { id:'moea', name:'Moëa', color:'#C8763A', styleBase:'organic hand-drawn', palette:'#C8763A, #E8D5B0, #FAF6F0', mood:'artisanal, chaleureux, méditerranéen, authentique', da:'terracotta et sable, esthétique craft, textures organiques, feel fait main', refs:'Le Creuset, Maison Balzac' },
+  { id:'900care', name:'900.care', color:'#B8FF57', styleBase:'bold geometric', palette:'#2D2D5E, #B8FF57, #FFFFFF', mood:'bold, durable, disruptif, moderne, éco-responsable', da:'géométrique tranchant, navy profond et lime électrique, maximalisme sobre, pas de rondeurs excessives', refs:'Oatly, Lush, BrewDog' },
+];
+
+let brands = [];
+let selected = null;
+let ratio = '1:1';
+let comments = [];
+let history = [];
+let currentUrl = null;
+
+function loadData() {
+  try { brands = JSON.parse(localStorage.getItem(BRANDS_KEY)) || DEFAULT_BRANDS; } catch { brands = DEFAULT_BRANDS; }
+  try { comments = JSON.parse(localStorage.getItem(COMMENTS_KEY)) || []; } catch { comments = []; }
+}
+
+function saveBrandsToStorage() {
+  localStorage.setItem(BRANDS_KEY, JSON.stringify(brands));
+}
+
+function saveComments() {
+  localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
+}
+
+function renderBrandList(filter = '') {
+  const list = document.getElementById('brandList');
+  list.innerHTML = '';
+  const filtered = brands.filter(b => b.name.toLowerCase().includes(filter.toLowerCase()));
+  filtered.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'brand-item' + (selected?.id === b.id ? ' active' : '');
+    el.innerHTML = `
+      <div class="brand-dot" style="background:${b.color}20;color:${b.color}">${b.name[0]}</div>
+      <div class="brand-info">
+        <div class="brand-name">${b.name}</div>
+        <div class="brand-style-tag">${b.styleBase} · ${b.mood.split(',')[0].trim()}</div>
+      </div>
+      <span class="brand-check">✓</span>
+    `;
+    el.onclick = () => selectBrand(b);
+    list.appendChild(el);
+  });
+}
+
+function selectBrand(b) {
+  selected = b;
+  renderBrandList(document.getElementById('brandSearch').value);
+  renderContextBar();
+}
+
+function renderContextBar() {
+  const bar = document.getElementById('contextBar');
+  if (!selected) { bar.innerHTML = ''; return; }
+  bar.innerHTML = `
+    <div class="context-pill"><span class="context-dot" style="background:${selected.color}"></span>${selected.name}</div>
+    <div class="context-pill">🎨 ${selected.styleBase}</div>
+    <div class="context-pill">✦ ${selected.mood.split(',').slice(0,2).join(', ')}</div>
+    ${selected.refs ? `<div class="context-pill">ref: ${selected.refs}</div>` : ''}
+  `;
+}
+
+function buildPrompt(userPrompt, brand) {
+  return `${userPrompt}, ${brand.styleBase} icon design style, ${brand.da}, brand color palette: ${brand.palette}, mood: ${brand.mood}, ${brand.refs ? 'visual references similar to ' + brand.refs + ', ' : ''}transparent or white background, centered composition, professional icon quality, high detail, cohesive with brand identity`;
+}
+
+async function generate() {
+  if (!selected) { showError('Sélectionne une marque'); return; }
+  const prompt = document.getElementById('promptInput').value.trim();
+  if (!prompt) { showError('Entre un prompt'); return; }
+
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  currentUrl = null;
+  document.getElementById('dlBtn').style.display = 'none';
+
+  const zone = document.getElementById('resultZone');
+  zone.className = 'result-zone';
+  zone.innerHTML = `<div class="spinner-wrap"><div class="spinner"></div><div class="spinner-label">Génération...</div></div>`;
+
+  const fullPrompt = buildPrompt(prompt, selected);
+
+  try {
+    const resp = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: fullPrompt, ratio })
+    });
+    const data = await resp.json();
+    if (!data.taskId) throw new Error(data.error || 'Pas de taskId');
+
+    zone.querySelector('.spinner-label').textContent = 'En attente...';
+
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      if (attempts > 72) {
+        clearInterval(poll);
+        zone.innerHTML = `<div class="placeholder"><div style="color:#FF8080;font-size:13px">Timeout — réessaie</div></div>`;
+        btn.disabled = false;
+        return;
+      }
+      try {
+        const sr = await fetch(`/api/status?taskId=${data.taskId}`);
+        const sd = await sr.json();
+        if (sd.state === 'success') {
+          clearInterval(poll);
+          currentUrl = sd.url;
+          zone.className = 'result-zone has-image';
+          zone.innerHTML = `<img src="${sd.url}" alt="icon" />`;
+          addToHistory(sd.url, prompt);
+          document.getElementById('dlBtn').style.display = 'block';
+          document.getElementById('dlBtn').onclick = () => downloadImage(sd.url, prompt);
+          btn.disabled = false;
+        } else if (sd.state === 'failed') {
+          clearInterval(poll);
+          zone.innerHTML = `<div class="placeholder"><div style="color:#FF8080;font-size:13px">Échec — réessaie</div></div>`;
+          btn.disabled = false;
+        } else {
+          const lbl = zone.querySelector('.spinner-label');
+          if (lbl) lbl.textContent = `En cours... ${attempts * 5}s`;
+        }
+      } catch(e) {}
+    }, 5000);
+
+  } catch(err) {
+    zone.innerHTML = `<div class="placeholder"><div style="color:#FF8080;font-size:13px">${err.message}</div></div>`;
+    btn.disabled = false;
+  }
+}
+
+function addToHistory(url, prompt) {
+  history.unshift({ url, prompt });
+  if (history.length > 20) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const bar = document.getElementById('historyBar');
+  if (history.length === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = history.map(h => `
+    <div class="history-thumb" title="${h.prompt}" onclick="document.getElementById('resultZone').innerHTML='<img src=\\'${h.url}\\' alt=\\'icon\\'/>';document.getElementById('resultZone').className='result-zone has-image';currentUrl='${h.url}'">
+      <img src="${h.url}" />
+    </div>
+  `).join('');
+}
+
+function downloadImage(url, prompt) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `icon_${selected?.id || 'brand'}_${prompt.replace(/\s+/g,'_').slice(0,30)}.png`;
+  a.target = '_blank';
+  a.click();
+}
+
+/* RATIO */
+document.querySelectorAll('.ratio-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ratio = btn.dataset.ratio;
+    const zone = document.getElementById('resultZone');
+    const map = {'1:1':'1','4:5':'4/5','9:16':'9/16','16:9':'16/9','3:2':'3/2'};
+    zone.style.aspectRatio = map[ratio] || '1';
+  };
+});
+
+/* SEARCH */
+document.getElementById('brandSearch').addEventListener('input', e => renderBrandList(e.target.value));
+document.getElementById('promptInput').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+
+/* COMMENTS */
+function toggleComments() {
+  document.getElementById('commentPanel').classList.toggle('open');
+}
+
+function renderComments() {
+  const list = document.getElementById('commentList');
+  const badge = document.getElementById('commentBadge');
+  if (comments.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">Aucun commentaire</div>';
+    badge.style.display = 'none';
+    return;
+  }
+  badge.style.display = 'block';
+  badge.textContent = comments.length;
+  list.innerHTML = comments.map(c => `
+    <div class="comment-item">
+      <div class="comment-meta">${c.brand || '—'} · ${c.date}</div>
+      <div class="comment-text">${c.text}</div>
+    </div>
+  `).join('');
+}
+
+function addComment() {
+  const input = document.getElementById('commentInput');
+  const text = input.value.trim();
+  if (!text) return;
+  comments.unshift({ text, brand: selected?.name || '—', date: new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) });
+  saveComments();
+  renderComments();
+  input.value = '';
+}
+
+/* ADD BRAND MODAL */
+function openAddModal() { document.getElementById('modalOverlay').classList.add('open'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+document.getElementById('newColor').addEventListener('input', e => {
+  document.getElementById('newColorHex').value = e.target.value;
+});
+document.getElementById('newColorHex').addEventListener('input', e => {
+  if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) document.getElementById('newColor').value = e.target.value;
+});
+
+async function handleFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  document.getElementById('pdfDrop').classList.add('has-file');
+  document.getElementById('pdfDrop').textContent = '✓ ' + file.name;
+  document.getElementById('aiExtractStatus').style.display = 'block';
+
+  try {
+    const base64 = await toBase64(file);
+    const resp = await fetch('/api/extract-da', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64, filename: file.name, type: file.type })
+    });
+    const data = await resp.json();
+    if (data.da) document.getElementById('newDA').value = data.da;
+    if (data.palette) document.getElementById('newPalette').value = data.palette;
+    if (data.mood) document.getElementById('newMood').value = data.mood;
+    if (data.refs) document.getElementById('newRefs').value = data.refs;
+    document.getElementById('aiExtractStatus').textContent = '✓ DA extraite — vérifie et complète';
+    document.getElementById('aiExtractStatus').style.color = 'var(--accent)';
+  } catch(e) {
+    document.getElementById('aiExtractStatus').textContent = 'Erreur extraction — remplis manuellement';
+    document.getElementById('aiExtractStatus').style.color = '#FF8080';
+  }
+}
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function saveBrand() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { showError('Donne un nom à la marque'); return; }
+  const brand = {
+    id: name.toLowerCase().replace(/\s+/g,'_') + '_' + Date.now(),
+    name,
+    color: document.getElementById('newColorHex').value || document.getElementById('newColor').value,
+    styleBase: document.getElementById('newStyleBase').value,
+    palette: document.getElementById('newPalette').value,
+    mood: document.getElementById('newMood').value,
+    da: document.getElementById('newDA').value,
+    refs: document.getElementById('newRefs').value
+  };
+  brands.push(brand);
+  saveBrandsToStorage();
+  renderBrandList();
+  closeModal();
+  selectBrand(brand);
+  ['newName','newColorHex','newPalette','newMood','newDA','newRefs'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pdfDrop').className = 'pdf-drop';
+  document.getElementById('pdfDrop').innerHTML = '<div>📎 Glisse un PDF ou une image de charte ici</div><div style="font-size:11px;margin-top:4px">La DA sera extraite automatiquement par IA</div>';
+  document.getElementById('aiExtractStatus').style.display = 'none';
+}
+
+function showError(msg) {
+  const t = document.getElementById('errorToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* INIT */
+loadData();
+renderBrandList();
+renderComments();
+</script>
+</body>
+</html>
